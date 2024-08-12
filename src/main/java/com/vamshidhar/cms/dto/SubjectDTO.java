@@ -1,0 +1,17 @@
+package com.vamshidhar.cms.dto;
+
+
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class SubjectDTO {
+    Long id;
+    String title;
+}
