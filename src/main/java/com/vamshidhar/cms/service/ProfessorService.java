@@ -1,12 +1,16 @@
 package com.vamshidhar.cms.service;
 
+import com.vamshidhar.cms.advices.ApiError;
+import com.vamshidhar.cms.advices.ApiResponse;
+import com.vamshidhar.cms.dto.IdsDTO;
 import com.vamshidhar.cms.dto.ProfessorDTO;
-import com.vamshidhar.cms.dto.StudentDTO;
-import com.vamshidhar.cms.dto.SubjectDTO;
+import com.vamshidhar.cms.dto.projections.*;
 import com.vamshidhar.cms.entities.ProfessorEntity;
 import com.vamshidhar.cms.entities.StudentEntity;
 import com.vamshidhar.cms.entities.SubjectEntity;
+import com.vamshidhar.cms.exceptions.ResourceNotFoundException;
 import com.vamshidhar.cms.repository.ProfessorRepository;
+import com.vamshidhar.cms.repository.StudentRepository;
 import com.vamshidhar.cms.repository.SubjectRepository;
 
 import lombok.AllArgsConstructor;
@@ -25,55 +29,120 @@ public class ProfessorService {
     private final ModelMapper modelMapper;
     private final ProfessorRepository professorRepository;
     private final SubjectRepository subjectRepository;
+    private final StudentRepository studentRepository;
 
-    public ProfessorDTO createProfessor(ProfessorDTO professor) {
+    public ProfessorProjection createProfessor(ProfessorDTO professor) {
         ProfessorEntity savedProfessor =
                 professorRepository.save(modelMapper.map(professor, ProfessorEntity.class));
-        return modelMapper.map(savedProfessor, ProfessorDTO.class);
+        return getProfessorById(savedProfessor.getId());
     }
 
-    public ProfessorDTO getProfessorById(Long id) {
-        ProfessorEntity professor = professorRepository.findById(id).get();
-        return modelMapper.map(professor, ProfessorDTO.class);
-    }
-
-    public Set<ProfessorDTO> getProfessors() {
-        List<ProfessorEntity> professors = professorRepository.findAll();
-        Set<ProfessorDTO> professordtos =
+    public Set<ProfessorProjection> createProfessors(Set<ProfessorDTO> professors) {
+        Set<ProfessorEntity> profEntities =
                 professors.stream()
-                        .map(e -> modelMapper.map(e, ProfessorDTO.class))
+                        .map(e -> modelMapper.map(e, ProfessorEntity.class))
                         .collect(Collectors.toSet());
-        return professordtos;
+        List<ProfessorEntity> savedProfessors = professorRepository.saveAll(profEntities);
+        Set<Long> ids = savedProfessors.stream().map(e -> e.getId()).collect(Collectors.toSet());
+        return getProfessors(ids);
     }
 
-    public Set<StudentDTO> getStudents(Long id) {
-        Set<StudentEntity> students = professorRepository.findStudentsByProfessorId(id);
-        Set<StudentDTO> studentDtos =
-                students.stream()
-                        .map(e -> modelMapper.map(e, StudentDTO.class))
-                        .collect(Collectors.toSet());
-        return studentDtos;
+    public Set<ProfessorProjection> getProfessors() {
+        return professorRepository.findAllProjection();
     }
 
-    public Set<SubjectDTO> getSubjects(Long id) {
-        Set<SubjectEntity> subjects = professorRepository.findSubjectsByProfessorId(id);
-        Set<SubjectDTO> subjectDtos =
-                subjects.stream()
-                        .map(e -> modelMapper.map(e, SubjectDTO.class))
-                        .collect(Collectors.toSet());
-        return subjectDtos;
+    public Set<ProfessorProjection> getProfessors(Set<Long> ids) {
+        return professorRepository.findByIdIn(ids);
     }
 
-    public ProfessorDTO patchSubject(Long profId, Long subId, String option){
-        ProfessorEntity professor = professorRepository.findById(profId).orElseGet(null);
-        SubjectEntity subject = subjectRepository.findById(subId).orElseGet(null);
-        if(option.equals("add")){
+    public ProfessorProjection getProfessorById(Long id) {
+        if (!professorRepository.existsById(id)) {
+            throw new ResourceNotFoundException(id, "Professor");
+        }
+        return professorRepository.findByIdProjection(id);
+    }
+
+    public Set<ProfessorProjection> searchProfessorByName(String name) {
+        return professorRepository.findByNameContains(name);
+    }
+
+    public ProfessorProjection patchSubject(Long profId, Long subId, String option) {
+        ProfessorEntity professor =
+                professorRepository
+                        .findById(profId)
+                        .orElseThrow(() -> new ResourceNotFoundException(profId, "Professor"));
+        SubjectEntity subject =
+                subjectRepository
+                        .findById(subId)
+                        .orElseThrow(() -> new ResourceNotFoundException(subId, "Subject"));
+
+        if (option.equals("add")) {
             professor.getSubjects().add(subject);
-        }else{
+        } else {
             professor.getSubjects().remove(subject);
         }
+        ProfessorEntity savedProfessor = professorRepository.save(professor);
+        return getProfessorById(savedProfessor.getId());
+    }
 
+    public ApiResponse<ProfessorProjection> patchSubjects(Long profId, IdsDTO ids) {
+        ProfessorEntity professor =
+                professorRepository
+                        .findById(profId)
+                        .orElseThrow(() -> new ResourceNotFoundException(profId, "Professor"));
+
+        Set<SubjectEntity> subjects =
+                ids.getIds().stream()
+                        .map(id -> subjectRepository.findById(id).orElse(null))
+                        .filter(e -> e != null)
+                        .collect(Collectors.toSet());
+
+        Set<Long> invalidIds =
+                ids.getIds().stream()
+                        .filter(id -> !subjectRepository.existsById(id))
+                        .collect(Collectors.toSet());
+        System.out.println(invalidIds);
+        professor.getSubjects().addAll(subjects);
         professorRepository.save(professor);
-        return modelMapper.map(professor, ProfessorDTO.class);
+
+        ApiResponse<ProfessorProjection> response = new ApiResponse<>(getProfessorById(profId));
+        if (invalidIds.size() > 0) {
+            ApiError error =
+                    ApiError.builder()
+                            .message("Found Invalid Ids")
+                            .subErrors(invalidIds.stream().map(String::valueOf).toList())
+                            .build();
+            response.setError(error);
+        }
+
+        return response;
+    }
+
+    public ProfessorProjection patchStudent(Long profId, Long studentId, String option) {
+
+        ProfessorEntity professor =
+                professorRepository
+                        .findById(profId)
+                        .orElseThrow(() -> new ResourceNotFoundException(profId, "Professor"));
+
+        StudentEntity student =
+                studentRepository
+                        .findById(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Student"));
+
+        if (option.equals("add")) {
+            professor.getStudents().add(student);
+            student.getProfessors().add(professor);
+        } else {
+            professor.getStudents().remove(student);
+            student.getProfessors().remove(professor);
+        }
+        studentRepository.save(student);
+        ProfessorEntity savedProfessor = professorRepository.save(professor);
+        return getProfessorById(savedProfessor.getId());
+    }
+
+    public void deleteProfessor(Long id) {
+        professorRepository.deleteById(id);
     }
 }

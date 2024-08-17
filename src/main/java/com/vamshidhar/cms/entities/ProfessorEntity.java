@@ -4,7 +4,6 @@ package com.vamshidhar.cms.entities;
 import java.util.Objects;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -38,18 +37,15 @@ public class ProfessorEntity {
 
 
     @ManyToMany(mappedBy = "professors")
-    @JsonBackReference
     Set<StudentEntity> students;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "professor_subject",
     joinColumns = @JoinColumn(name="professor_id"),
     inverseJoinColumns = @JoinColumn(name="subject_id"))
-    @JsonBackReference
     Set<SubjectEntity> subjects;
 
     @OneToMany(mappedBy = "mentor")
-    @JsonBackReference
     Set<StudentEntity> mentees;
 
             @Override

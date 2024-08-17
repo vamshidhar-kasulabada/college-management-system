@@ -1,8 +1,8 @@
 package com.vamshidhar.cms.entities;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,19 +33,23 @@ public class StudentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @Column(nullable = false)
     String name;
 
+    @Column(nullable = false)
     String branch;
+
+    @Column(nullable = false)
     String course;
 
-    Long rollno;
+    @Column(unique = true,name = "roll_no", nullable = false)
+    Long rollNo;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "student_professor",
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "professor_id"))
-    @JsonManagedReference
     Set<ProfessorEntity> professors;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -53,12 +57,10 @@ public class StudentEntity {
             name = "student_subject",
             joinColumns = @JoinColumn(name = "student_id"),
             inverseJoinColumns = @JoinColumn(name = "subject_id"))
-    @JsonManagedReference
     Set<SubjectEntity> subjects;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "student_mentor_id")
-    @JsonManagedReference
     ProfessorEntity mentor;
 
     @Override
