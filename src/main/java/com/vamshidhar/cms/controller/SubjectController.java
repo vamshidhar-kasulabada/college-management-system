@@ -2,10 +2,13 @@ package com.vamshidhar.cms.controller;
 
 import com.vamshidhar.cms.dto.SubjectDTO;
 import com.vamshidhar.cms.dto.projections.SubjectProjection;
+import com.vamshidhar.cms.repository.SubjectRepository;
 import com.vamshidhar.cms.service.SubjectService;
 
 import lombok.AllArgsConstructor;
 
+import org.slf4j.helpers.SubstituteServiceProvider;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.OutputStream;
 import java.util.Set;
 
 @RestController
@@ -45,6 +49,11 @@ public class SubjectController {
     @GetMapping("/search")
     public Set<SubjectProjection> getSubjectsByTitle(@RequestParam(required = true) String title){
         return subjectService.getSubjectsByTitle(title);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteSubject(@PathVariable Long id){
+        subjectService.deleteSubject(id);
     }
 
 }

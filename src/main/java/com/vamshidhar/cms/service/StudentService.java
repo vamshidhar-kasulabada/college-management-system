@@ -1,5 +1,8 @@
 package com.vamshidhar.cms.service;
 
+import com.vamshidhar.cms.advices.ApiError;
+import com.vamshidhar.cms.advices.ApiResponse;
+import com.vamshidhar.cms.dto.IdsDTO;
 import com.vamshidhar.cms.dto.StudentDTO;
 import com.vamshidhar.cms.dto.projections.*;
 import com.vamshidhar.cms.entities.ProfessorEntity;
@@ -48,7 +51,7 @@ public class StudentService {
         return getStudents(studentIds);
     }
 
-    public Set<StudentProjection> getStudentsByName(String name) {
+    public Set<StudentProjection> searchStudentByName(String name) {
         return studentRepository.findByNameContains(name);
     }
 
@@ -72,43 +75,129 @@ public class StudentService {
     public StudentProjection getStudentById(Long id) {
         return studentRepository
                 .findByIdProjection(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Student not found id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(id, "Student"));
     }
 
-    public StudentDTO patchProfessor(Long studentId, Long profId, String option) {
-        StudentEntity student = studentRepository.findById(studentId).get();
-        ProfessorEntity professor = professorRepository.findById(profId).get();
+    public StudentProjection patchProfessor(Long studentId, Long profId, String option) {
+        StudentEntity student =
+                studentRepository
+                        .findById(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Student"));
+        ProfessorEntity professor =
+                professorRepository
+                        .findById(profId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Professor"));
         if (option.equals("add")) {
             student.getProfessors().add(professor);
         } else {
             student.getProfessors().remove(professor);
         }
         studentRepository.save(student);
-        professorRepository.save(professor);
-        return modelMapper.map(student, StudentDTO.class);
+        return this.getStudentById(studentId);
     }
 
-    public StudentDTO pathSubject(Long studentId, Long subId, String option) {
-        StudentEntity student = studentRepository.findById(studentId).get();
-        SubjectEntity subject = subjectRepository.findById(subId).get();
+    public ApiResponse<StudentProjection> patchProfessors(Long studentId, IdsDTO profIds) {
+        StudentEntity student =
+               studentRepository 
+                        .findById(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Student"));
+
+        Set<ProfessorEntity> professors =
+                profIds.getIds().stream()
+                        .map(id -> professorRepository.findById(id).orElse(null))
+                        .filter(e -> e != null)
+                        .collect(Collectors.toSet());
+
+        Set<Long> invalidIds =
+                profIds.getIds().stream()
+                        .filter(id -> !professorRepository.existsById(id))
+                        .collect(Collectors.toSet());
+
+        student.getProfessors().addAll(professors);
+        studentRepository.save(student);
+
+        ApiResponse<StudentProjection> response = new ApiResponse<>(this.getStudentById(studentId));
+        if (invalidIds.size() > 0) {
+            ApiError error =
+                    ApiError.builder()
+                            .message("Found Invalid Ids")
+                            .subErrors(invalidIds.stream().map(String::valueOf).toList())
+                            .build();
+            response.setError(error);
+        }
+
+        return response;
+
+    }
+
+    public StudentProjection pathSubject(Long studentId, Long subId, String option) {
+        StudentEntity student =
+                studentRepository
+                        .findById(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Student"));
+        SubjectEntity subject =
+                subjectRepository
+                        .findById(subId)
+                        .orElseThrow(() -> new ResourceNotFoundException(subId, "Subject"));
         if (option.equals("add")) {
             student.getSubjects().add(subject);
         } else {
             student.getSubjects().remove(subject);
         }
         studentRepository.save(student);
-        return modelMapper.map(student, StudentDTO.class);
+        return this.getStudentById(studentId);
     }
 
-    public StudentDTO patchMentor(Long studentId, Long profId) {
-        StudentEntity student = studentRepository.findById(studentId).get();
-        ProfessorEntity professor = professorRepository.findById(profId).get();
+    public ApiResponse<StudentProjection> patchSubjects(Long studentId, IdsDTO subIds) {
+        StudentEntity student =
+               studentRepository 
+                        .findById(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Student"));
+
+        Set<SubjectEntity> subjects =
+                subIds.getIds().stream()
+                        .map(id -> subjectRepository.findById(id).orElse(null))
+                        .filter(e -> e != null)
+                        .collect(Collectors.toSet());
+
+        Set<Long> invalidIds =
+                subIds.getIds().stream()
+                        .filter(id -> !subjectRepository.existsById(id))
+                        .collect(Collectors.toSet());
+
+        student.getSubjects().addAll(subjects);
+        studentRepository.save(student);
+
+        ApiResponse<StudentProjection> response = new ApiResponse<>(this.getStudentById(studentId));
+        if (invalidIds.size() > 0) {
+            ApiError error =
+                    ApiError.builder()
+                            .message("Found Invalid Ids")
+                            .subErrors(invalidIds.stream().map(String::valueOf).toList())
+                            .build();
+            response.setError(error);
+        }
+
+        return response;
+
+    }
+
+    public StudentProjection patchMentor(Long studentId, Long profId) {
+        StudentEntity student =
+                studentRepository
+                        .findById(studentId)
+                        .orElseThrow(() -> new ResourceNotFoundException(studentId, "Student"));
+        ProfessorEntity professor =
+                professorRepository
+                        .findById(profId)
+                        .orElseThrow(() -> new ResourceNotFoundException(profId, "Professor"));
         student.setMentor(professor);
         studentRepository.save(student);
-        return modelMapper.map(student, StudentDTO.class);
+        return this.getStudentById(studentId);
     }
 
     public void deleteStudent(Long id) {
         studentRepository.deleteById(id);
     }
+
 }

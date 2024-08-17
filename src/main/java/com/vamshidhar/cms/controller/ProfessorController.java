@@ -8,8 +8,6 @@ import com.vamshidhar.cms.service.ProfessorService;
 
 import lombok.AllArgsConstructor;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Set;
-
-import javax.net.ssl.HttpsURLConnection;
 
 @RestController
 @AllArgsConstructor
@@ -53,7 +49,7 @@ public class ProfessorController {
     }
 
     @GetMapping("/search")
-    public Set<ProfessorProjection> searchProfessorsByName(@RequestParam String name){
+    public Set<ProfessorProjection> searchProfessorsByName(@RequestParam String name) {
         return professorService.searchProfessorByName(name);
     }
 
@@ -68,19 +64,24 @@ public class ProfessorController {
 
     @PatchMapping("/{profId}/subject/addAll")
     public ApiResponse<ProfessorProjection> patchSubjects(
-            @PathVariable Long profId, @RequestBody  IdsDTO ids) {
-            return professorService.patchSubjects(profId, ids);
+            @PathVariable Long profId, @RequestBody IdsDTO ids) {
+        return professorService.patchSubjects(profId, ids);
     }
 
-     @PatchMapping("/{profId}/student/{studentId}")
-     public ProfessorProjection patchStudent(
-            @PathVariable Long profId, @PathVariable Long studentId, @RequestParam String option)
-     {
+    @PatchMapping("/{profId}/student/{studentId}")
+    public ProfessorProjection patchStudent(
+            @PathVariable Long profId, @PathVariable Long studentId, @RequestParam String option) {
         if (option.equals("add") || option.equals("remove")) {
             return professorService.patchStudent(profId, studentId, option);
         }
-        throw new IllegalArgumentException("Invalid option: "+ option +". choose add or remove.");
-     }
+        throw new IllegalArgumentException("Invalid option: " + option + ". choose add or remove.");
+    }
+
+    @PatchMapping("/{profId}/mentees/addAll")
+    public ApiResponse<ProfessorProjection> patchMentees(
+            @PathVariable Long profId, @RequestBody IdsDTO studentIds) {
+        return professorService.patchMentees(profId, studentIds);
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProfessor(@PathVariable Long id) {

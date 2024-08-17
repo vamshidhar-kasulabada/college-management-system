@@ -101,7 +101,6 @@ public class ProfessorService {
                 ids.getIds().stream()
                         .filter(id -> !subjectRepository.existsById(id))
                         .collect(Collectors.toSet());
-        System.out.println(invalidIds);
         professor.getSubjects().addAll(subjects);
         professorRepository.save(professor);
 
@@ -142,7 +141,48 @@ public class ProfessorService {
         return getProfessorById(savedProfessor.getId());
     }
 
+    public ApiResponse<ProfessorProjection> patchMentees(Long profId, IdsDTO studentIds) {
+        ProfessorEntity professor =
+                professorRepository
+                        .findById(profId)
+                        .orElseThrow(() -> new ResourceNotFoundException(profId, "Professor"));
+
+        Set<StudentEntity> students =
+                studentIds.getIds().stream()
+                        .map(id -> studentRepository.findById(id).orElse(null))
+                        .filter(e -> e != null)
+                        .collect(Collectors.toSet());
+
+        Set<Long> invalidIds =
+                studentIds.getIds().stream()
+                        .filter(id -> !studentRepository.existsById(id))
+                        .collect(Collectors.toSet());
+
+
+        //professor.getMentees().addAll(students);
+        //professorRepository.save(professor);
+        
+        students.stream()
+            .forEach(e->{
+                e.setMentor(professor);
+            });
+        studentRepository.saveAll(students);
+
+        ApiResponse<ProfessorProjection> response = new ApiResponse<>(getProfessorById(profId));
+        if (invalidIds.size() > 0) {
+            ApiError error =
+                    ApiError.builder()
+                            .message("Found Invalid Ids")
+                            .subErrors(invalidIds.stream().map(String::valueOf).toList())
+                            .build();
+            response.setError(error);
+        }
+
+        return response;
+    }
+
     public void deleteProfessor(Long id) {
         professorRepository.deleteById(id);
     }
+
 }

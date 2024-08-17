@@ -1,5 +1,7 @@
 package com.vamshidhar.cms.controller;
 
+import com.vamshidhar.cms.advices.ApiResponse;
+import com.vamshidhar.cms.dto.IdsDTO;
 import com.vamshidhar.cms.dto.StudentDTO;
 import com.vamshidhar.cms.dto.projections.*;
 import com.vamshidhar.cms.service.StudentService;
@@ -75,12 +77,12 @@ public class StudentController {
     }
 
     @GetMapping("/search")
-    public Set<StudentProjection> getStudentsByName(@RequestParam(required = true) String name) {
-        return studentService.getStudentsByName(name);
+    public Set<StudentProjection> searchStudentByName(@RequestParam(required = true) String name) {
+        return studentService.searchStudentByName(name);
     }
 
     @PatchMapping("/{studentId}/professor/{profId}")
-    public StudentDTO patchProfessor(
+    public StudentProjection patchProfessor(
             @PathVariable Long studentId, @PathVariable Long profId, @RequestParam String option) {
         if (option.equals("add") || option.equals("remove")) {
             return studentService.patchProfessor(studentId, profId, option);
@@ -88,8 +90,14 @@ public class StudentController {
         throw new IllegalArgumentException("Invalid option: "+ option +". choose add or remove.");
     }
 
+    @PatchMapping("/{studentId}/professor/addAll")
+    public ApiResponse<StudentProjection> patchProfessors(
+            @PathVariable Long studentId, @RequestBody IdsDTO profIds) {
+            return studentService.patchProfessors(studentId, profIds);
+    }
+
     @PatchMapping("/{studentId}/subject/{subId}")
-    public StudentDTO patchSubject(
+    public StudentProjection patchSubject(
             @PathVariable Long studentId, @PathVariable Long subId, @RequestParam String option) {
         if (option.equals("add") || option.equals("remove")) {
             return studentService.pathSubject(studentId, subId, option);
@@ -97,8 +105,14 @@ public class StudentController {
         throw new IllegalArgumentException("Invalid option: "+ option +". choose add or remove.");
     }
 
+    @PatchMapping("/{studentId}/subject/addAll")
+    public ApiResponse<StudentProjection> patchSubjects(
+            @PathVariable Long studentId, @RequestBody IdsDTO subIds) {
+            return studentService.patchSubjects(studentId, subIds);
+    }
+
     @PatchMapping("/{studentId}/mentor/{profId}")
-    public StudentDTO patchMentor(@PathVariable Long studentId, @PathVariable Long profId) {
+    public StudentProjection patchMentor(@PathVariable Long studentId, @PathVariable Long profId) {
         return studentService.patchMentor(studentId, profId);
     }
 

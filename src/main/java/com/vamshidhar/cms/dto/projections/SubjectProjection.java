@@ -11,11 +11,11 @@ public interface SubjectProjection {
 
     interface SubjectStudentProjection{
         Long getId();
-        Long getName();
+        String getName();
     }
 
     interface SubjectProfessorProjection{
         Long getId();
-        Long getName();
+        String getName();
     }
 }

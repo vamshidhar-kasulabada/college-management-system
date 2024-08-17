@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.vamshidhar.cms.dto.IdsDTO;
 import com.vamshidhar.cms.dto.projections.*;
 import com.vamshidhar.cms.entities.StudentEntity;
 

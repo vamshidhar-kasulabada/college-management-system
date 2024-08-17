@@ -45,6 +45,9 @@ public class SubjectService {
         return subjectRepository.getSubjects();
     }
 
+    public void deleteSubject(Long id){
+        subjectRepository.deleteById(id);
+    }
     public Set<SubjectProjection> getSubjectsByTitle(String title){
         return subjectRepository.findByTitleContains(title);
     }
@@ -52,4 +55,5 @@ public class SubjectService {
     private Set<SubjectProjection> getSubjects(Set<Long> subjectIds) {
         return subjectRepository.findByIdIn(subjectIds);
     }
+
 }

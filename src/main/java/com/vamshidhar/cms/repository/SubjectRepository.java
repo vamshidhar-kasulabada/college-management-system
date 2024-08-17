@@ -17,8 +17,6 @@ public interface SubjectRepository extends JpaRepository<SubjectEntity, Long>{
 
     public Set<SubjectProjection> findByIdIn(Set<Long> ids);
 
-    //@Query("SELECT s from SubjectEntity s where title like :title order by id")
-    //public Set<SubjectProjection> getByName(String name);
     
     public Set<SubjectProjection> findByTitleContains(String title);
 
