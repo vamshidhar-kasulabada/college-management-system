@@ -6,6 +6,7 @@ import com.vamshidhar.cms.dto.ProfessorDTO;
 import com.vamshidhar.cms.dto.projections.*;
 import com.vamshidhar.cms.service.ProfessorService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,12 +31,12 @@ public class ProfessorController {
     private final ProfessorService professorService;
 
     @PostMapping
-    public ProfessorProjection createProfessor(@RequestBody ProfessorDTO professor) {
+    public ProfessorProjection createProfessor(@RequestBody @Valid ProfessorDTO professor) {
         return professorService.createProfessor(professor);
     }
 
     @PostMapping("/addAll")
-    public Set<ProfessorProjection> createProfessors(@RequestBody Set<ProfessorDTO> professor) {
+    public Set<ProfessorProjection> createProfessors(@RequestBody @Valid Set<ProfessorDTO> professor) {
         return professorService.createProfessors(professor);
     }
 
@@ -51,6 +53,11 @@ public class ProfessorController {
     @GetMapping("/search")
     public Set<ProfessorProjection> searchProfessorsByName(@RequestParam String name) {
         return professorService.searchProfessorByName(name);
+    }
+
+    @PutMapping("/{id}")
+    public ProfessorProjection updateProfessor(@PathVariable Long id , @RequestBody @Valid ProfessorDTO professor){
+        return professorService.updateProfessor(id, professor);
     }
 
     @PatchMapping("/{profId}/subject/{subId}")

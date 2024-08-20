@@ -3,6 +3,7 @@ package com.vamshidhar.cms.service;
 import com.vamshidhar.cms.dto.SubjectDTO;
 import com.vamshidhar.cms.dto.projections.SubjectProjection;
 import com.vamshidhar.cms.entities.SubjectEntity;
+import com.vamshidhar.cms.exceptions.ResourceNotFoundException;
 import com.vamshidhar.cms.repository.SubjectRepository;
 
 import lombok.AllArgsConstructor;
@@ -38,11 +39,22 @@ public class SubjectService {
     }
 
     public SubjectProjection getSubjectById(Long id) {
+        if (!subjectRepository.existsById(id)) {
+            throw new ResourceNotFoundException(id, "Subject");
+        }
         return subjectRepository.getSubjectById(id);
     }
 
     public Set<SubjectProjection> getSubjects() {
         return subjectRepository.getSubjects();
+    }
+
+    public SubjectProjection updateSubject(Long id, SubjectDTO sub){
+        SubjectEntity subject = subjectRepository.findById(id)
+            .orElseThrow(()->new ResourceNotFoundException(id, "Subject"));
+        subject.setTitle(sub.getTitle());
+        subjectRepository.save(subject);
+        return this.getSubjectById(id);
     }
 
     public void deleteSubject(Long id){

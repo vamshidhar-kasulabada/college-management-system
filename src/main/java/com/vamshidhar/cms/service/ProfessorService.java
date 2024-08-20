@@ -66,6 +66,15 @@ public class ProfessorService {
         return professorRepository.findByNameContains(name);
     }
 
+    public ProfessorProjection updateProfessor(Long id, ProfessorDTO professor){
+        ProfessorEntity prof = professorRepository.findById(id).
+            orElseThrow(()-> new ResourceNotFoundException(id, "Professor"));
+        prof.setName(professor.getName());
+        professorRepository.save(prof);
+        return this.getProfessorById(id);
+    }
+
+
     public ProfessorProjection patchSubject(Long profId, Long subId, String option) {
         ProfessorEntity professor =
                 professorRepository

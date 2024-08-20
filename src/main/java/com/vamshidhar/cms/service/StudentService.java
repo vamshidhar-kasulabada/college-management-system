@@ -57,7 +57,7 @@ public class StudentService {
 
     // sortBy exists and valid, direction can be null or valid
     public Set<StudentProjection> getStudents(String sortBy, String direction) {
-        if (direction == null || direction == "asc") {
+        if (direction == null || direction.equals("asc")) {
             sortBy = sortBy.equals("roll_no") ? "rollNo" : sortBy;
             return studentRepository.findAllStudentProjections(Sort.by(Order.asc(sortBy)));
         }
@@ -76,6 +76,22 @@ public class StudentService {
         return studentRepository
                 .findByIdProjection(id)
                 .orElseThrow(() -> new ResourceNotFoundException(id, "Student"));
+    }
+
+    public StudentProjection updateStudent(Long id, StudentDTO stud){
+        StudentEntity student =
+                studentRepository
+                        .findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException(id, "Student"));
+
+        StudentEntity studentToSave = modelMapper.map(stud, StudentEntity.class);
+        studentToSave.setId(id);
+        studentToSave.setMentor(student.getMentor());
+        studentToSave.setProfessors(student.getProfessors());
+        studentToSave.setSubjects(student.getSubjects());
+
+        studentRepository.save(studentToSave);
+        return this.getStudentById(id);
     }
 
     public StudentProjection patchProfessor(Long studentId, Long profId, String option) {
